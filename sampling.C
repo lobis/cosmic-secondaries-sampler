@@ -53,6 +53,10 @@ void sampling()
     while (zenithHist->GetEntries() < 1000000)
     {
         break;
+        
+        /////////////// BRUTE FORCE ////////////////
+        
+        
         if (int(zenithHist->GetEntries()) % 10000 == 0)
         {
             cout << zenithHist->GetEntries() << endl;
@@ -79,12 +83,14 @@ void sampling()
 
     while (zenithHist->GetEntries() < 10000000)
     {
-        // break;
+        break;
+        
+        /////////////// SMAPLING IN RECTANGLE  //////////////// 
+        
+        // Ellipse center is (tan(zenith), 0) and major axis is 1/cos(zenith), minor axis is 1
+        // Random point in ellipse, uniformly distributed
         const auto zenith = zenithAngleCorrected.GetRandom();
-        // ellipse center is (tan(zenith), 0) and major axis is 1/cos(zenith), minor axis is 1
-        // random point in ellipse, uniformly distributed
-
-        // TODO: improve with smarter sampling
+        // Uniform sampling in rectangle
         double y = 1;
         const double xOffset = TMath::Tan(zenith);
         double x = 1 / TMath::Cos(zenith) + xOffset;
@@ -103,7 +109,30 @@ void sampling()
         distanceToCenter->Fill(positionOnDisk.Mod());
         zenithHist->Fill(zenith);
     }
-
+    
+    while (zenithHist->GetEntries() < 10000000)
+    {
+        //break;
+        
+        //////////// LINEAR TRANSFORM FROM DISK ///////////////////
+        
+        // Sample zenith angle
+        const auto zenith = zenithAngleCorrected.GetRandom();
+        // Sample in disk and linear transform to ellipse L*X+v, L = np.diag([1/np.cos(zenit), 1]), v = [np.tan(zenit),0]
+        const TVector2 pointOnDisk = PointOnDisk(); // Point in disk
+        double xE = pointOnDisk.X() / TMath::Cos(zenith) + TMath::Tan(zenith); // Linar trasform of the point
+        double yE = pointOnDisk.Y();
+        // Rotate by phi
+        const double phi = rnd->Uniform() * TMath::TwoPi();
+        TVector2 positionOnEllipse(xE, yE);
+        double x = positionOnEllipse.X() * TMath::Cos(phi) - positionOnEllipse.Y() * TMath::Sin(phi);
+        double y = positionOnEllipse.X() * TMath::Sin(phi) + positionOnEllipse.Y() * TMath::Cos(phi);
+        positionOnEllipse = TVector2(x, y);
+        // Histograms
+        positionInDisk->Fill(positionOnEllipse.X(), positionOnEllipse.Y());
+        distanceToCenter->Fill(positionOnEllipse.Mod());
+        zenithHist->Fill(zenith);
+    }
     // normalize histogram
     // zenithHist->Scale(1.0 / zenithHist->Integral());
 
