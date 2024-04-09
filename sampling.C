@@ -85,7 +85,7 @@ void sampling()
     {
         break;
         
-        /////////////// SMAPLING IN RECTANGLE  //////////////// 
+        /////////////// SAMPLING IN RECTANGLE  //////////////// 
         
         // Ellipse center is (tan(zenith), 0) and major axis is 1/cos(zenith), minor axis is 1
         // Random point in ellipse, uniformly distributed
